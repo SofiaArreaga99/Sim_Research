@@ -1,0 +1,179 @@
+#Fagus grandifolia
+
+#Calling packages
+
+library(fitdistrplus)
+library(distr)
+library(dplyr)
+
+## First Step  CREATE 10,000 RANDOM DBH // Large Numer DBH
+
+
+##Specie: #Fagus grandifolia FagusGr
+
+rsqp3<-0.994 ##Published R^2 value 
+minDBH3<-2 #From Ry´s Unit: Cm 
+maxDBH3<-60 #From Ry´s Unit: Cm 
+B0_3<- -1.7448 #From Ry´s paper
+B1_3<- 2.3613  #From Ry´s paper
+CF3<- 1.01 #From Ry´s paper
+
+##CREATE 10,000 RANDOM DBH
+
+test3 <- matrix(rnorm(10000 * 1000), nrow = 10000, ncol = 1000)
+
+##Create Random DBHs over the range sampled 
+
+
+#Cm unit
+
+dbhFagusGr <- minDBH3 + (maxDBH3 - minDBH3) * runif(10000, min = 0, max = 1)
+
+## CALCULATE BIOMASS##
+
+## calculate the biomass using the published equation form
+
+meany3 <- ((B0_3 + B1_3 * log(dbhFagusGr))*CF3) 
+
+##Introduce Random Error into calculated biomass
+
+##this next part fuzzies the biomasses to create 1000 different populations ## 
+
+ys3 <- matrix(rep(meany3, times = 1000), nrow = length(meany3), ncol = 1000)
+
+## creating the steps used to generate wider ranges of fuzzed biomasses. This progression
+## will create 1000 different biomass sets. It can be adjusted to larger or smaller steps
+## as needed to match as close as possible the published R-square.
+
+#stdevs <- seq(1, 200.8, by = 0.2)            
+stdevs3 <- seq(0.1, 100, length.out=1000)  #works better
+
+stdevs2_3 <- matrix(rep(stdevs3, each = 10000), nrow = 10000, ncol = length(stdevs3))  
+dbh2_3 <- matrix(rep(dbhFagusGr, times = 1000), nrow = length(dbhFagusGr), ncol = 1000)
+
+psuedys3 <- ys3 + stdevs2_3 * test3 #this makes the new biomasses if no heteroscedasticity #
+
+#psuedys3 <- ys3 + stdevs2_3 * test3 * dbh2_3 #this makes the new biomasses with heteroscedasticity #
+
+rsq2_3 <- numeric(1000)  # memory allocation is all, speeds up
+
+for (i in 1:1000) {  # get stats on the datasets using the fit vs. psuedo-population
+  
+  sst3 <- sum((psuedys3[, i] - mean(psuedys3[, i]))^2)  # Suma de cuadrados total // Total sum of squares
+  sse3 <- sum((psuedys3[, i] - meany3)^2)  # Suma de cuadrados del error // Sum of squares of the error
+  rsq2_3[i] <- 1 - (sse3 / sst3)  # Coeficiente de determinación R² // Coefficient of determination R²
+}
+
+
+## To search for closest dataset to the published R^2, subtract the R^2 from
+## the R^2 of the equation and select the diff closest to zero.  
+## This is vectorized saving a for loop
+
+
+diffs3 <- abs(rsq2_3 - rsqp3)
+I3 <- which.min(diffs3)  # Find the index of the minimum value
+BMFagusGr<- psuedys3[, I3]  # Select corresponding column
+
+## Create figure for checking if result is reasonable ##
+
+
+plot(log(dbhFagusGr), BMFagusGr, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Fagus Grandifolia")
+
+# Write the data in an Excel file
+
+PseudoDataFagusGr <- data.frame(dbhFagusGr, BMFagusGr)
+PseudoDataFagusGr <- subset(PseudoDataFagusGr, BMFagusGr>1) ##We ignore the values less than 1
+
+plot(PseudoDataFagusGr$dbhFagusGr, PseudoDataFagusGr$BMFagusGr, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Fagus Grandifolia")
+
+# Specifies the full path to save the file
+
+write.csv(PseudoDataFagusGr, file = "FagusGr.csv", row.names = FALSE)
+
+## print(sse)
+## mean(rsq2)
+
+
+## Logaritmic differences
+
+noiter<-10000
+coefficients3 <- data.frame(intercept=rep(NA,noiter),slope=rep(NA,noiter))
+for(i in 1:noiter){
+  datatofit<- sample_n(PseudoDataFagusGr,40,replace=FALSE)
+  modelfit <- lm((BMFagusGr) ~ log(dbhFagusGr), data = na.omit(datatofit)) #Just add the other part
+  
+  
+  coefficients3[i,] <- unname(coef(modelfit))
+  
+  
+}
+
+
+#Mean
+InterFagus<-mean(coefficients3$intercept)
+SlopeFagus<-mean(coefficients3$slope)
+
+#plot(coefficients3$intercept,coefficients3$slope)
+
+any(is.na(datatofit)) #NA revision in the data
+
+#50th percentile
+QinterFagus<-quantile(coefficients3$intercept, probs = 0.5)
+QSlopeFagus<-quantile(coefficients3$slope, probs = 0.5)
+
+
+#SD
+SDInterFagus<-sd(coefficients3$intercept) #standar deviation intercept
+SDSlopeFagus<-sd(coefficients3$slope)
+
+
+# Name columns for clarity           Nombrar columnas para claridad
+colnames(coefficients3) <- c("intercept_Fagus", "slope_Fagus")
+# Adding the correlative 
+coefficients3$correlative <- seq_len(nrow(coefficients3))
+
+
+#View(coefficients3)
+
+
+
+#### FINISH HERE METHOD 1 #####
+
+### NEW COVARIANCE ##
+
+library(MASS)
+
+cov_matrix_Fagus <- cov(coefficients3)
+mean_vector_Fagus <- colMeans(coefficients3)
+
+
+View(cov_matrix_Fagus)
+
+# Simulate new pairs of a and b       Simular nuevos pares de a y b
+sim_ab_Fagus <- as.data.frame(mvrnorm(n = 10000, mu = mean_vector_Fagus, Sigma = cov_matrix_Fagus))
+
+
+
+# Name columns for clarity           Nombrar columnas para claridad
+colnames(sim_ab_Fagus) <- c("intercept_Fagus", "slope_Fagus")
+sim_ab_Fagus$correlative <- seq_len(nrow(sim_ab_Fagus))
+View(sim_ab_Fagus)
+
+
+## Is it true "? 
+
+
+
+# Datos originales
+plot(coefficients3$intercept, coefficients3$slope, 
+     main = "Original vs Simulated Fagus", col = "blue", pch = 16, cex = 0.5,
+     xlab = "Intercepto", ylab = "Slope")
+
+# Agregar simulaciones
+points(sim_ab_BetulAll$intercept, sim_ab_BetulAll$slope, col = rgb(1, 0, 0, 0.3), pch = 16)
+legend("topright", legend = c("Original", "Simulated"),
+       col = c("blue", "red"), pch = 16)
+
+
+
+
