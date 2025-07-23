@@ -33,7 +33,7 @@ dbhPiceaRu <- minDBH7 + (maxDBH7 - minDBH7) * runif(10000, min = 0, max = 1)
 
 ## calculate the biomass using the published equation form
 
-meany7 <- (exp(B0_7 + B1_7 * log(dbhPiceaRu))*CF7) #Should I multiply for the CF?
+meany7 <- ((B0_7 + B1_7 * log(dbhPiceaRu))*CF7) #Should I multiply for the CF?
 
 ##Introduce Random Error into calculated biomass
 
@@ -51,11 +51,10 @@ stdevs7 <- seq(0.1, 100, length.out=1000)  #works better
 stdevs2_7 <- matrix(rep(stdevs7, each = 10000), nrow = 10000, ncol = length(stdevs7))  
 dbh2_7 <- matrix(rep(dbhPiceaRu, times = 1000), nrow = length(dbhPiceaRu), ncol = 1000)
 
-#psuedys=ys+stdevs2.*(test);%this makes the new biomasses if no heteroscedasticity #
 
-psuedys7 <- ys7 + stdevs2_7 * test7 * dbh2_7
+psuedys7 <- ys7 + stdevs2_7 * test7 #this makes the new biomasses if no heteroscedasticity #
 
-#this makes the new biomasses with heteroscedasticity #
+#psuedys7 <- ys7 + stdevs2_7 * test7 * dbh2_7 #this makes the new biomasses with heteroscedasticity #
 
 rsq2_7 <- numeric(1000)  # memory allocation is all, speeds up
 
@@ -79,7 +78,7 @@ BMPiceaRu<- psuedys7[, I7]  # Select corresponding column
 ## Create figure for checking if result is reasonable ##
 
 
-plot(dbhPiceaRu, BMPiceaRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "PiceaRu")
+plot(log(dbhPiceaRu), BMPiceaRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Picea Rubens")
 
 # Write the data in an Excel file
 
@@ -102,7 +101,7 @@ noiter<-10000
 coefficients7 <- data.frame(intercept=rep(NA,noiter),slope=rep(NA,noiter))
 for(i in 1:noiter){
   datatofit<- sample_n(PseudoDataPiceaRu,33,replace=FALSE)
-  modelfit <- lm(log(BMPiceaRu) ~ log(dbhPiceaRu), data = na.omit(datatofit)) #Just add the other part
+  modelfit <- lm((BMPiceaRu) ~ log(dbhPiceaRu), data = na.omit(datatofit)) #Just add the other part
   
   
   coefficients7[i,] <- unname(coef(modelfit))
@@ -111,14 +110,24 @@ for(i in 1:noiter){
 }
 
 
-
+#Mean
 InterPicea<-mean(coefficients7$intercept)
 SlopePicea<-mean(coefficients7$slope)
 
 any(is.na(datatofit)) #NA revision in the data
 
-
 #View(PseudoDataPiceaRu)
+
+#quartiles
+#50th percentile
+QinterPicea<-quantile(coefficients7$intercept, probs = 0.5)
+QSlopePicea<-quantile(coefficients7$slope, probs = 0.5)
+
+
+#SD
+SDInterPicea<-sd(coefficients7$intercept) #standar deviation intercept
+SDSlopePicea<-sd(coefficients7$slope)
+
 
 
 View(coefficients7)
@@ -128,8 +137,6 @@ colnames(coefficients7) <- c("intercept_PiceaRu", "slope_PiceaRu")
 coefficients7$correlative <- seq_len(nrow(coefficients7))
 
 
-SDInterPicea<-sd(coefficients7$intercept) #standar deviation intercept
-SDSlopePicea<-sd(coefficients7$slope)
 
 
 ### NEW COVARIANCE ##

@@ -33,7 +33,7 @@ dbhTsugaCa <- minDBH9 + (maxDBH9 - minDBH9) * runif(10000, min = 0, max = 1)
 
 ## calculate the biomass using the published equation form
 
-meany9 <-(exp(B0_9 + B1_9 * log(dbhTsugaCa))*CF9) #Should I multiply for the CF?
+meany9 <-((B0_9 + B1_9 * log(dbhTsugaCa))*CF9) #Should I multiply for the CF?
 
 ##Introduce Random Error into calculated biomass
 
@@ -51,9 +51,9 @@ stdevs9 <- seq(0.1, 100, length.out=1000)  #works better
 stdevs2_9 <- matrix(rep(stdevs9, each = 10000), nrow = 10000, ncol = length(stdevs9))  
 dbh2_9 <- matrix(rep(dbhTsugaCa, times = 1000), nrow = length(dbhTsugaCa), ncol = 1000)
 
-#psuedys=ys+stdevs2.*(test);%this makes the new biomasses if no heteroscedasticity #
+psuedys9 <- ys9 + stdevs2_9 * test9  #%this makes the new biomasses if no heteroscedasticity #
 
-psuedys9 <- ys9 + stdevs2_9 * test9 * dbh2_9
+#psuedys9 <- ys9 + stdevs2_9 * test9 * dbh2_9
 
 #this makes the new biomasses with heteroscedasticity #
 
@@ -79,7 +79,7 @@ BMTsugaCa<- psuedys9[, I9]  # Select corresponding column
 ## Create figure for checking if result is reasonable ##
 
 
-plot(dbhTsugaCa, BMTsugaCa, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
+plot(log(dbhTsugaCa), BMTsugaCa, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
 
 # Write the data in an Excel file
 
@@ -102,7 +102,7 @@ noiter<-10000
 coefficients9 <- data.frame(intercept=rep(NA,noiter),slope=rep(NA,noiter))
 for(i in 1:noiter){
   datatofit<- sample_n(PseudoDataTsugaCa,30,replace=FALSE)
-  modelfit <- lm(log(BMTsugaCa) ~ log(dbhTsugaCa), data = na.omit(datatofit)) #Just add the other part
+  modelfit <- lm((BMTsugaCa) ~ log(dbhTsugaCa), data = na.omit(datatofit)) #Just add the other part
   
   
   coefficients9[i,] <- unname(coef(modelfit))
@@ -111,12 +111,21 @@ for(i in 1:noiter){
 }
 
 
-
+#Mean
 InterTsuga<-mean(coefficients9$intercept)
 SlopeTsuga<-mean(coefficients9$slope)
 
-
 any(is.na(datatofit)) #NA revision in the data
+
+#SD
+SDInterTsuga<-sd(coefficients9$intercept) #standar deviation intercept
+SDSlopeTsuga<-sd(coefficients9$slope)
+
+#Percentile
+#50th percentile
+QinterTsuga<-quantile(coefficients9$intercept, probs = 0.5)
+QSlopeTsuga<-quantile(coefficients9$slope, probs = 0.5)
+
 
 
 View(coefficients9)
@@ -126,8 +135,7 @@ colnames(coefficients9) <- c("intercept_Tsuga", "slope_Tsuga")
 # Adding the correlative 
 coefficients9$correlative <- seq_len(nrow(coefficients9))
 
-SDInterTsuga<-sd(coefficients9$intercept) #standar deviation intercept
-SDSlopeTsuga<-sd(coefficients9$slope)
+
 
 
 ### NEW COVARIANCE ##
@@ -162,7 +170,7 @@ plot(coefficients9$intercept, coefficients9$slope,
 
 # Add SImulations Agregar simulaciones
 points(sim_ab_Tsuga$intercept, sim_ab_Tsuga$slope, col = rgb(1, 0, 0, 0.3), pch = 16)
-legend("topright", legend = c("Original", "Simulated"),
+legend("topright", legend = c("Original from the previous simulations", "New Simulations"),
        col = c("blue", "red"), pch = 16)
 
 

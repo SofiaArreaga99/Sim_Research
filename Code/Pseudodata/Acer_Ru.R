@@ -33,7 +33,7 @@ dbhAcerRu <- minDBH5 + (maxDBH5 - minDBH5) * runif(10000, min = 0, max = 1)
 
 ## calculate the biomass using the published equation form
 
-meany5 <- (exp(B0_5 + B1_5 * log(dbhAcerRu)))*CF5 #Should I multiply for the CF?
+meany5 <- ((B0_5 + B1_5 * log(dbhAcerRu)))*CF5 #Should I multiply for the CF?
 
 ##Introduce Random Error into calculated biomass
 
@@ -51,9 +51,9 @@ stdevs5 <- seq(0.1, 100, length.out=1000)  #works better
 stdevs2_5 <- matrix(rep(stdevs5, each = 10000), nrow = 10000, ncol = length(stdevs5))  
 dbh2_5 <- matrix(rep(dbhAcerRu, times = 1000), nrow = length(dbhAcerRu), ncol = 1000)
 
-#psuedys=ys+stdevs2.*(test);%this makes the new biomasses if no heteroscedasticity #
+psuedys5 <- ys5 + stdevs2_5 * test5 #this makes the new biomasses if no heteroscedasticity #
 
-psuedys5 <- ys5 + stdevs2_5 * test5 * dbh2_5
+#psuedys5 <- ys5 + stdevs2_5 * test5 * dbh2_5
 
 #this makes the new biomasses with heteroscedasticity #
 
@@ -79,14 +79,14 @@ BMAcerRu<- psuedys5[, I5]  # Select corresponding column
 ## Create figure for checking if result is reasonable ##
 
 
-plot(dbhAcerRu, BMAcerRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Balsam Fir")
+plot(log(dbhAcerRu), BMAcerRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Acer Rubrum")
 
 # Write the data in an Excel file
 
 PseudoDataAcerRu <- data.frame(dbhAcerRu, BMAcerRu)
 PseudoDataAcerRu <- subset(PseudoDataAcerRu, BMAcerRu>1)
 
-plot(PseudoDataAcerRu$dbhAcerRu, PseudoDataAcerRu$BMAcerRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "AcerRu")
+plot(PseudoDataAcerRu$dbhAcerRu, PseudoDataAcerRu$BMAcerRu, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Acer Rubrum")
 
 
 
@@ -105,18 +105,27 @@ noiter<-10000
 coefficients5 <- data.frame(intercept=rep(NA,noiter),slope=rep(NA,noiter))
 for(i in 1:noiter){
   datatofit<- sample_n(PseudoDataAcerRu,60,replace=FALSE) #Este es el que hay que cambiar 
-  modelfit <- lm(log(BMAcerRu) ~ log(dbhAcerRu), data = na.omit(datatofit)) #Just add the other part
+  modelfit <- lm((BMAcerRu) ~ log(dbhAcerRu), data = na.omit(datatofit)) #Just add the other part
   
   coefficients5[i,] <- unname(coef(modelfit))
   
 }
 
-
+#Mean
 InterAcer<-mean(coefficients5$intercept)
 SlopeAcer<-mean(coefficients5$slope)
 
 
 any(is.na(datatofit)) #NA revision in the data
+
+#SD
+SDInterAcer<-sd(coefficients5$intercept) #standar deviation intercept
+SDSlopeAcer<-sd(coefficients5$slope)
+
+
+#50th percentile
+QinterAcerRu<-quantile(coefficients2$intercept, probs = 0.5)
+QSlopeAcerRu<-quantile(coefficients2$slope, probs = 0.5)
 
 
 View(coefficients5)
@@ -126,8 +135,6 @@ colnames(coefficients5) <- c("intercept_AcerRu", "slope_AcerRu")
 coefficients5$correlative <- seq_len(nrow(coefficients5))
 
 
-SDInterAcer<-sd(coefficients5$intercept) #standar deviation intercept
-SDSlopeAcer<-sd(coefficients5$slope)
 
 
 

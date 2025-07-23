@@ -33,7 +33,7 @@ dbhAcerSa <- minDBH6 + (maxDBH6 - minDBH6) * runif(10000, min = 0, max = 1)
 
 ## calculate the biomass using the published equation form
 
-meany6 <- (exp(B0_6 + B1_6 * log(dbhAcerSa))*CF6) #Should I multiply for the CF?
+meany6 <- ((B0_6 + B1_6 * log(dbhAcerSa))*CF6) #Should I multiply for the CF?
 
 ##Introduce Random Error into calculated biomass
 
@@ -51,9 +51,9 @@ stdevs6 <- seq(0.1, 100, length.out=1000)  #works better
 stdevs2_6 <- matrix(rep(stdevs6, each = 10000), nrow = 10000, ncol = length(stdevs6))  
 dbh2_6 <- matrix(rep(dbhAcerSa, times = 1000), nrow = length(dbhAcerSa), ncol = 1000)
 
-#psuedys=ys+stdevs2.*(test);%this makes the new biomasses if no heteroscedasticity #
+psuedys6 <- ys6 + stdevs2_6 * test6 #this makes the new biomasses if no heteroscedasticity #
 
-psuedys6 <- ys6 + stdevs2_6 * test6 * dbh2_6
+#psuedys6 <- ys6 + stdevs2_6 * test6 * dbh2_6
 
 #this makes the new biomasses with heteroscedasticity #
 
@@ -79,7 +79,7 @@ BMAcerSa<- psuedys6[, I6]  # Select corresponding column
 ## Create figure for checking if result is reasonable ##
 
 
-plot(dbhAcerSa, BMAcerSa, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "AcerSa")
+plot(log(dbhAcerSa), BMAcerSa, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "AcerSa")
 
 # Write the data in an Excel file
 
@@ -102,7 +102,7 @@ noiter<-10000
 coefficients6 <- data.frame(intercept=rep(NA,noiter),slope=rep(NA,noiter))
 for(i in 1:noiter){
   datatofit<- sample_n(PseudoDataAcerSa,77,replace=FALSE)
-  modelfit <- lm(log(BMAcerSa) ~ log(dbhAcerSa), data = na.omit(datatofit)) #Just add the other part
+  modelfit <- lm((BMAcerSa) ~ log(dbhAcerSa), data = na.omit(datatofit)) #Just add the other part
   
   
   coefficients6[i,] <- unname(coef(modelfit))
@@ -111,23 +111,30 @@ for(i in 1:noiter){
 }
 
 
-
+#Mean
 InterAcerSac<-mean(coefficients6$intercept)
 SlopeAcerSac<-mean(coefficients6$slope)
 
 
 any(is.na(datatofit)) #NA revision in the data
 
+#SD
+SDInterAcerSac<-sd(coefficients6$intercept) #standar deviation intercept
+SDSlopeAcerSac<-sd(coefficients6$slope)
 
 #View(coefficients6)
+
+
+#Percentile 
+
+#50th percentile
+QinterAcerSa<-quantile(coefficients6$intercept, probs = 0.5)
+QSlopeAcerSa<-quantile(coefficients6$slope, probs = 0.5)
 
 # Name columns for clarity            Nombrar columnas para claridad
 colnames(coefficients6) <- c("intercept_AcerSac", "slope_AcerSac")
 # Adding the correlative 
 coefficients6$correlative <- seq_len(nrow(coefficients6))
-
-SDInterAcerSac<-sd(coefficients6$intercept) #standar deviation intercept
-SDSlopeAcerSac<-sd(coefficients6$slope)
 
 
 

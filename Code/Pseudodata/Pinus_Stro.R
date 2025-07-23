@@ -81,14 +81,14 @@ BMPinStro<- psuedys8[, I8]  # Select corresponding column
 ## Create figure for checking if result is reasonable ##
 
 
-plot(log(dbhPinStro), BMPinStro, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "PinStro")
+plot(log(dbhPinStro), BMPinStro, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Pinus Strobus")
 
 # Write the data in an Excel file
 
 PseudoDataPinStro <- data.frame(dbhPinStro, BMPinStro)
 PseudoDataPinStro <- subset(PseudoDataPinStro, BMPinStro>1)
 
-plot(PseudoDataPinStro$dbhPinStro, PseudoDataPinStro$BMPinStro, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "PinStro")
+plot(PseudoDataPinStro$dbhPinStro, PseudoDataPinStro$BMPinStro, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Pinus Strobus")
 
 # Specifies the full path to save the file
 

@@ -138,6 +138,14 @@ SDSlopeAbies<-sd(coefficients1$slope)
 
 
 
+#View(coefficients1)
+# Name columns for clarity            Nombrar columnas para claridad
+colnames(coefficients1) <- c("intercept_Abies", "slope_Abies")
+# Adding the correlative 
+coefficients1$correlative <- seq_len(nrow(coefficients1))
+
+
+
 ### NEW COVARIANCE ## Just in case :) 
 
 library(MASS)
@@ -152,13 +160,10 @@ View(cov_matrix_Abies)
 sim_ab_Abies <- as.data.frame(mvrnorm(n = 10, mu = mean_vector_Abies, Sigma = cov_matrix_Abies))
 
 
-
-# Name columns for clarity              Nombrar columnas para claridad
 colnames(sim_ab_Abies) <- c("intercept_Abies", "slope_Abies")
 
 sim_ab_Abies$correlative <- seq_len(nrow(sim_ab_Abies))
 View(sim_ab_Abies)
-
 
 ## Is it true "? 
 
