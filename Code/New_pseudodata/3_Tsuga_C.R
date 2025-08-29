@@ -80,11 +80,11 @@ I9_1 <- which.min(diffs9_1)  # Find the index of the minimum value
 BMTsugaCa_1<- psuedys9_1[, I9_1]  # Select corresponding column
 
 I9_1
-diffs9_1[64]
+diffs9_1[60]
 
 ## Create figure for checking if result is reasonable ##
 
-plot((dbhTsugaCa_1), BMTsugaCa_1, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
+plot((dbhTsugaCa_1), BMTsugaCa_1, pch = 16, xlab = "DBH (mm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
 
 # Write the data in an Excel file
 
@@ -92,7 +92,7 @@ PseudoDataTsugaCa1 <- data.frame(dbhTsugaCa_1, BMTsugaCa_1)
 PseudoDataTsugaCa1 <- subset(PseudoDataTsugaCa1, BMTsugaCa_1>1)
 PseudoDataTsugaCa1$eq <-"eq1_tsuga"
 
-head(PseudoDataTsugaCa1)
+#head(PseudoDataTsugaCa1)
 PseudoDataTsugaCa1$dbhTsugaCa_1 <- PseudoDataTsugaCa1$dbhTsugaCa_1 / 10  #convertion to cm
 
 head(PseudoDataTsugaCa1)
