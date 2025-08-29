@@ -99,7 +99,7 @@ head(PseudoDataTsugaCa1)
 
 #
 
-#Aún no sé como encontrar los coeficientes aquí 
+#Aún no sé como encontrar los coeficientes aquí :(((
 
 ## Logaritmic differences
 
