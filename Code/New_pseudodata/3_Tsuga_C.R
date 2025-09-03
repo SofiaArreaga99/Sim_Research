@@ -8,13 +8,14 @@ library(fitdistrplus)
 library(distr)
 library(dplyr)
 
-# First Step  CREATE 10,000 RANDOM DBH // Large Numer DBH
+#First Step  CREATE 10,000 RANDOM DBH // Large Numer DBH
 # Specie: Tsuga canadensis
+
 
 # Equation 1 Monteith 1979 (New York)
 # Units DBH mm and biomass kg 
 
-rsqp9_1<-0.99 ##Published R^2 value 
+rsqp9_1<-0.987 ##Published R^2 value 
 minDBH9_1<-2.5*10 #From Jenkin´s *10 conversion to mm
 maxDBH9_1<-55*10 #From Jenkin´s *10 conversion to mm
 a_9_1<- 6.1371 
@@ -80,46 +81,45 @@ I9_1 <- which.min(diffs9_1)  # Find the index of the minimum value
 BMTsugaCa_1<- psuedys9_1[, I9_1]  # Select corresponding column
 
 I9_1
-diffs9_1[60]
+diffs9_1[75]
 
 ## Create figure for checking if result is reasonable ##
 
-plot((dbhTsugaCa_1), BMTsugaCa_1, pch = 16, xlab = "DBH (mm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
+plot((dbhTsugaCa_1/10), BMTsugaCa_1, pch = 16, xlab = "DBH (cm)", ylab = "Biomass (kg)", main = "Tsuga Canadiensis")
 
 # Write the data in an Excel file
 
 PseudoDataTsugaCa1 <- data.frame(dbhTsugaCa_1, BMTsugaCa_1)
-PseudoDataTsugaCa1 <- subset(PseudoDataTsugaCa1, BMTsugaCa_1>1)
-PseudoDataTsugaCa1$eq <-"eq1_tsuga"
-
+#PseudoDataTsugaCa1 <- subset(PseudoDataTsugaCa1, BMTsugaCa_1>1)
 #head(PseudoDataTsugaCa1)
-PseudoDataTsugaCa1$dbhTsugaCa_1 <- PseudoDataTsugaCa1$dbhTsugaCa_1 / 10  #convertion to cm
+#head(PseudoDataTsugaCa1)
+## Logaritmic differences #meany9_1 <-a_9_1 + b_9_1*(dbhTsugaCa_1) + c_9_1*((dbhTsugaCa_1)^d_9_1)
 
-head(PseudoDataTsugaCa1)
-
-#
-
-#Aún no sé como encontrar los coeficientes aquí :(((
-
-## Logaritmic differences
 
 noiter <- 10000
-coefficients9_1 <- data.frame(intercept = rep(NA, noiter), slope = rep(NA, noiter))
+coefficients9_1 <- data.frame(a = rep(NA, noiter), b = rep(NA, noiter), c = rep(NA, noiter))
+
 
 for (i in 1:noiter) {
   
-  datatofit_1 <- sample_n(PseudoDataTsugaCa1, 33, replace = FALSE)
-  modelfit_1 <- lm(BMTsugaCa_1 ~ log(dbhTsugaCa_1), data = na.omit(datatofit_1))
-  coefficients9_1[i, ] <- unname(coef(modelfit_1))
+ datatofit_1 <- sample_n(PseudoDataTsugaCa1, 33, replace = FALSE)
+ modelfit_1 <- lm(BMTsugaCa_1 ~ dbhTsugaCa_1 + I((dbhTsugaCa_1)^2), data = na.omit(datatofit_1))
+ coefficients9_1[i, ] <- unname(coef(modelfit_1))
 }
+
+#Preparing data to export
+PseudoDataTsugaCa1$eq <-"eq1_tsuga"
+PseudoDataTsugaCa1$dbhTsugaCa_1 <- PseudoDataTsugaCa1$dbhTsugaCa_1 / 10  #convertion to cm
 
 # Muestra las primeras filas
 head(coefficients9_1)
+
 head(datatofit_1)
 
 #Mean
-InterTsuga<-mean(coefficients9$intercept)
-SlopeTsuga<-mean(coefficients9$slope)
+aTsuga<-mean(coefficients9_1$a)
+bTsuga<-mean(coefficients9_1$b)
+cTsuga<-mean(coefficients9_1$c)
 
 any(is.na(datatofit)) #NA revision in the data
 
@@ -134,10 +134,11 @@ QSlopeTsuga<-quantile(coefficients9$slope, probs = 0.5)
 
 
 
-View(coefficients9)
+View(coefficients9_1)
+
 
 # Name columns for clarity            Nombrar columnas para claridad
-colnames(coefficients9) <- c("intercept_Tsuga", "slope_Tsuga")
+colnames(coefficients9) <- c("a", "b","c")
 # Adding the correlative 
 coefficients9$correlative <- seq_len(nrow(coefficients9))
 
@@ -187,3 +188,17 @@ legend("topleft",
        pch = c(16, 17),
        bty = "n")
 
+
+
+
+# Just testing the fit of the data #
+
+set.seed(123)
+dbh_test <- runif(1000, 25, 550) #  mm
+biomasa_test <- 6.1371 - 0.2785*dbh_test + 0.004286*(dbh_test^2)
+
+# fit
+fit_test <- lm(biomasa_test ~ dbh_test + I(dbh_test^2))
+coef(fit_test)
+
+#It works 
