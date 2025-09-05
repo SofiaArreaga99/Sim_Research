@@ -17,24 +17,42 @@ theo = c(1/4,1/4,1/4,1/4) #This value has to be in proportion
 chisq.test (x=observed,
             p=theo)
 
+
+
+
+
+
+
 # Two by two table  
 
-# Crear tabla 2x2 con un tema de naturaleza
-data <- matrix(c(25, 15,   # Con humedal: 25 con aves, 15 sin aves
-                 8,  32),  # Sin humedal: 8 con aves, 32 sin aves
+#Ho= The wetlands and not wetlands have the same amount of birds
+#Ha= The weltands and not wetlands doesn´t have the same amount of birds
+
+# two by two table
+data <- matrix(c(25, 15,   # Inside a wetland: 25 with birds, 15 without birds
+                 8,  32),  # Outside a wetland: 8 with birds, 32 without birds
                nrow = 2,
                byrow = TRUE)
 
-colnames(data) <- c("Aves_presentes", "Aves_ausentes")
-rownames(data) <- c("Con_humedal", "Sin_humedal")
+colnames(data) <- c("Birds_presence", "Birds_Not_Presence")
+rownames(data) <- c("Inside_W", "Not_W")
 
-tabla <- as.table(data)
-tabla
+table <- as.table(data)
+table
 
-chisq.test(tabla, correct = TRUE)
+chisq.test(table, correct = TRUE)
+
+#Do we want more information?
+
+prop.test(table)
 
 
+# fisher test as a complement 
 
+#Ho= The proportion of birds in wetlands is the same as the proportion in not wetlands
+#Ha= The proportion is different 
+
+fisher.test(table)
 
 
 
